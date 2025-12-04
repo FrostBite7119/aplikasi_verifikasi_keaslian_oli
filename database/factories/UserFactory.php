@@ -24,21 +24,27 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => 'USR-' . strtoupper(Str::random(8)),
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'phone_number' => fake()->unique()->numerify('08##########'),
+            'bank' => fake()->randomElement(['BCA', 'BNI', 'BRI', 'Mandiri']),
+            'bank_account_number' => fake()->unique()->numerify('##########'),
+            'account_type' => fake()->randomElement(['store', 'mechanic']),
+            'validation_status' => 'approved',
+            'validation_date' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Indicate that the user is pending validation.
      */
-    public function unverified(): static
+    public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'validation_status' => 'pending',
+            'validation_date' => null,
         ]);
     }
 }

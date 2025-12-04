@@ -13,18 +13,35 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('user_id')->unique();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('phone_number')->unique();
+            $table->string('bank');
+            $table->string('bank_account_number')->unique();
+            $table->enum('account_type', ['store', 'mechanic']);
+            $table->enum('validation_status', ['approved', 'rejected', 'pending'])->default('pending');
+            $table->timestamp('validation_date')->nullable();
             $table->string('password');
+            $table->string('profile_picture')->nullable();
+            $table->integer('points')->default(0);
+            $table->integer('pending_points')->default(0);
             $table->rememberToken();
             $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            $table->string('phone_number')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('password_reset_logs', function (Blueprint $table) {
+            $table->id();
+            $table->string('token');
+            $table->boolean('is_used')->default(false);
+            $table->timestamp('expired_at')->nullable();
+            $table->foreignId('user_id')->constrained(table: 'users', indexName: 'password_reset_logs');
+            $table->timestamps();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -44,6 +61,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('password_reset_logs');
         Schema::dropIfExists('sessions');
     }
 };
