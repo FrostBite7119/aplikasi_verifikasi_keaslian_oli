@@ -26,6 +26,12 @@ class AuthenticityQRCodeScanController extends Controller
 
     public function scan(?string $qrcode = null): View
     {
+        if ($this->shouldUseLastScanData($qrcode)) {
+            return $this->buildViewFromLastScan();
+        }
+
+        session()->forget('last_scan_id');
+
         if (!$qrcode) {
             return view('main');
         }
@@ -44,42 +50,79 @@ class AuthenticityQRCodeScanController extends Controller
         return view('index', ['qrcode' => $qrcode]);
     }
 
+    protected function shouldUseLastScanData(?string $qrcode): bool
+    {
+        if (!session()->has('last_scan_id')) {
+            return false;
+        }
+
+        $lastScan = AuthenticityQRCodeScan::where('scan_id', session()->get('last_scan_id'))->first();
+
+        return $lastScan 
+            && $lastScan->qr_code == $qrcode 
+            && $lastScan->ip_address == $this->userIP;
+    }
+
+    protected function buildViewFromLastScan(): View
+    {
+        $scan = AuthenticityQRCodeScan::where('scan_id', session()->get('last_scan_id'))->first();
+
+        return view('index', [
+            'status' => $scan->scan_type,
+            'data' => $this->buildProductData($scan->authenticityQRCode, AuthenticityScanLimit::first()),
+            'scan_id' => $scan->scan_id,
+            'skipStoreLocation' => true,
+        ]);
+    }
+
     public function store(StoreAuthenticityQRCodeScanRequest $request): JsonResponse
     {
-        $validatedData = $request->validated();
-        $qrcode = $this->isQRCodeValid($validatedData['qrcode']);
-        
+        $data = $request->validated();
+
+        // helper to create a scan and persist last scan id in session
+        $saveScan = function (string $status, ?int $authId = null) use ($data) {
+            $scan = $this->recordScan($data, $status, $authId);
+            session()->put('last_scan_id', $scan->scan_id);
+            return $scan;
+        };
+
+        $qrcode = $this->isQRCodeValid($data['qrcode']);
+
         if (!$qrcode) {
-            $this->recordScan($validatedData, self::STATUS_NOT_FOUND);
+            $scan = $saveScan(self::STATUS_NOT_FOUND);
+
             return response()->json([
                 'status' => self::STATUS_NOT_FOUND,
-                'data' => null
+                'data' => null,
+                'scan_id' => $scan->scan_id,
             ]);
         }
 
         $scanLimit = AuthenticityScanLimit::first();
 
-        if ($qrcode->total_scans > $scanLimit->max_scans) {
-            $this->recordScan($validatedData, self::STATUS_LIMIT_EXCEEDED, $qrcode->id);
+        if ($scanLimit && $qrcode->total_scans > $scanLimit->max_scans) {
+            $scan = $saveScan(self::STATUS_LIMIT_EXCEEDED, $qrcode->id);
+
             return response()->json([
                 'status' => self::STATUS_LIMIT_EXCEEDED,
-                'data' => ['scan_limit' => $scanLimit->max_scans]
+                'data' => ['scan_limit' => $scanLimit->max_scans],
+                'scan_id' => $scan->scan_id,
             ]);
         }
 
         if ($this->hasExceededIpScanLimit($qrcode->code)) {
             return response()->json([
                 'status' => self::STATUS_IP_LIMIT_EXCEEDED,
-                'message' => 'Anda telah mencapai batas maksimum scan produk dari alamat IP ini. Permintaan Anda tidak dapat diproses lebih lanjut.'
             ]);
         }
 
         $qrcode->increment('total_scans');
-        $this->recordScan($validatedData, self::STATUS_SUCCESS, $qrcode->id);
+        $scan = $saveScan(self::STATUS_SUCCESS, $qrcode->id);
 
         return response()->json([
             'status' => self::STATUS_SUCCESS,
-            'data' => $this->buildProductData($qrcode, $scanLimit)
+            'data' => $this->buildProductData($qrcode, $scanLimit),
+            'scan_id' => $scan->scan_id,
         ]);
     }
 
@@ -97,9 +140,12 @@ class AuthenticityQRCodeScanController extends Controller
         return $totalIpScans >= self::MAX_SCANS_PER_IP;
     }
 
-    protected function recordScan(array $validatedData, string $scanType, ?int $authenticityQrCodeId = null): void
+    protected function recordScan(array $validatedData, string $scanType, ?int $authenticityQrCodeId = null): AuthenticityQRCodeScan
     {
-        AuthenticityQRCodeScan::create([
+        $scanId = $this->generateScanId();
+
+        $authenticityQrCodeScan = AuthenticityQRCodeScan::create([
+            'scan_id' => $scanId,
             'qr_code' => $validatedData['qrcode'],
             'ip_address' => $this->userIP,
             'scan_location' => $validatedData['scan_location'],
@@ -110,6 +156,8 @@ class AuthenticityQRCodeScanController extends Controller
             'scan_type' => $scanType,
             'authenticity_qr_code_id' => $authenticityQrCodeId,
         ]);
+
+        return $authenticityQrCodeScan;
     }
 
     protected function buildProductData(AuthenticityQRCode $qrcode, AuthenticityScanLimit $scanLimit): array
@@ -124,5 +172,14 @@ class AuthenticityQRCodeScanController extends Controller
             'specification' => $qrcode->product->specification,
             'product_image' => url("products/image/{$qrcode->product->product_id}"),
         ];
+    }
+
+    private function generateScanId()
+    {
+        do {
+            $scanId = strtoupper(substr(bin2hex(random_bytes(8)), 0, 16));
+        } while (AuthenticityQRCodeScan::where('scan_id', $scanId)->exists());
+
+        return $scanId;
     }
 }

@@ -12,6 +12,7 @@ class AuthenticityQRCodeScan extends Model
     protected $table = 'authenticity_qr_code_scans';
 
     protected $fillable = [
+        'scan_id',
         'qr_code',
         'ip_address',
         'scan_location',
@@ -26,5 +27,10 @@ class AuthenticityQRCodeScan extends Model
     public function authenticityQRCode()
     {
         return $this->belongsTo(AuthenticityQRCode::class, 'authenticity_qr_code_id');
+    }
+
+    public function report()
+    {
+        return $this->hasOne(Report::class, 'authenticity_qr_code_scan_id');
     }
 }

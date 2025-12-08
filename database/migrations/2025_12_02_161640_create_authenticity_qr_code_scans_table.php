@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('authenticity_qr_code_scans', function (Blueprint $table) {
             $table->id();
+            $table->string('scan_id')->unique();
             $table->string('qr_code');
             $table->string('ip_address')->nullable();
             $table->string('scan_location');

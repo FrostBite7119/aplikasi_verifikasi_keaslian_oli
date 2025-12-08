@@ -114,6 +114,7 @@ class AuthenticityQRCodeScanTest extends TestCase
                 'specification' => $this->product->specification,
             ],
         ]);
+        $response->assertJsonStructure(['scan_id']);
 
         // Verify scan was recorded
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
@@ -122,6 +123,11 @@ class AuthenticityQRCodeScanTest extends TestCase
             'scan_type' => 'success',
             'authenticity_qr_code_id' => $this->qrCode->id,
         ]);
+
+        // Verify scan_id was generated
+        $scan = AuthenticityQRCodeScan::where('qr_code', $this->qrCode->code)->first();
+        $this->assertNotNull($scan->scan_id);
+        $this->assertEquals(16, strlen($scan->scan_id));
 
         // Verify total_scans was incremented
         $this->assertEquals(1, $this->qrCode->fresh()->total_scans);
@@ -145,6 +151,7 @@ class AuthenticityQRCodeScanTest extends TestCase
             'status' => 'not_found',
             'data' => null,
         ]);
+        $response->assertJsonStructure(['scan_id']);
 
         // Verify scan was recorded with not_found type
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
@@ -152,6 +159,11 @@ class AuthenticityQRCodeScanTest extends TestCase
             'scan_type' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
+
+        // Verify scan_id was generated
+        $scan = AuthenticityQRCodeScan::where('qr_code', 'INVALID-QR-CODE')->first();
+        $this->assertNotNull($scan->scan_id);
+        $this->assertEquals(16, strlen($scan->scan_id));
     }
 
     public function test_it_returns_limit_exceeded_when_scan_limit_reached(): void
@@ -177,6 +189,7 @@ class AuthenticityQRCodeScanTest extends TestCase
                 'scan_limit' => $this->scanLimit->max_scans,
             ],
         ]);
+        $response->assertJsonStructure(['scan_id']);
 
         // Verify scan was recorded with limit_exceeded type
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
@@ -184,6 +197,13 @@ class AuthenticityQRCodeScanTest extends TestCase
             'scan_type' => 'limit_exceeded',
             'authenticity_qr_code_id' => $this->qrCode->id,
         ]);
+
+        // Verify scan_id was generated
+        $scan = AuthenticityQRCodeScan::where('qr_code', $this->qrCode->code)
+            ->where('scan_type', 'limit_exceeded')
+            ->first();
+        $this->assertNotNull($scan->scan_id);
+        $this->assertEquals(16, strlen($scan->scan_id));
 
         // Verify total_scans was NOT incremented
         $this->assertEquals(10, $this->qrCode->fresh()->total_scans);
@@ -200,9 +220,10 @@ class AuthenticityQRCodeScanTest extends TestCase
             'longitude' => 106.8456,
         ];
 
-        // Create 3 scans from the same IP (127.0.0.1)
-        for ($i = 0; $i < 3; $i++) {
+        // Create 2 scans from the same IP (127.0.0.1) to reach the limit
+        for ($i = 0; $i < 2; $i++) {
             AuthenticityQRCodeScan::create([
+                'scan_id' => strtoupper(substr(bin2hex(random_bytes(8)), 0, 16)),
                 'qr_code' => $this->qrCode->code,
                 'ip_address' => '127.0.0.1',
                 'scan_location' => 'Previous Location',
@@ -220,15 +241,15 @@ class AuthenticityQRCodeScanTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'status' => 'ip_limit_exceeded',
-            'message' => 'Anda telah mencapai batas maksimum scan produk dari alamat IP ini. Permintaan Anda tidak dapat diproses lebih lanjut.',
         ]);
     }
 
     public function test_it_displays_error_on_scan_page_when_ip_limit_exceeded(): void
     {
-        // Create 3 scans from the same IP
-        for ($i = 0; $i < 3; $i++) {
+        // Create 2 scans from the same IP to reach the limit
+        for ($i = 0; $i < 2; $i++) {
             AuthenticityQRCodeScan::create([
+                'scan_id' => strtoupper(substr(bin2hex(random_bytes(8)), 0, 16)),
                 'qr_code' => $this->qrCode->code,
                 'ip_address' => '127.0.0.1',
                 'scan_location' => 'Previous Location',
@@ -299,6 +320,7 @@ class AuthenticityQRCodeScanTest extends TestCase
             'status' => 'not_found',
             'data' => null,
         ]);
+        $response->assertJsonStructure(['scan_id']);
     }
 
     public function test_it_increments_total_scans_correctly(): void
@@ -364,5 +386,213 @@ class AuthenticityQRCodeScanTest extends TestCase
         // Third scan - should fail with IP limit exceeded
         $response3 = $this->postJson('/store', $scanData);
         $response3->assertJson(['status' => 'ip_limit_exceeded']);
+    }
+
+    public function test_it_stores_last_scan_id_in_session(): void
+    {
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+
+        $response = $this->postJson('/store', $scanData);
+
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'success']);
+        
+        // Verify session has last_scan_id
+        $this->assertNotNull(session('last_scan_id'));
+        
+        // Verify the scan_id from response matches the one in session
+        $scanId = $response->json('scan_id');
+        $this->assertEquals($scanId, session('last_scan_id'));
+    }
+
+    public function test_it_stores_last_scan_id_for_not_found_status(): void
+    {
+        $scanData = [
+            'qrcode' => 'INVALID-QR-CODE',
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+
+        $response = $this->postJson('/store', $scanData);
+
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'not_found']);
+        
+        // Verify session has last_scan_id even for not_found
+        $this->assertNotNull(session('last_scan_id'));
+        
+        $scanId = $response->json('scan_id');
+        $this->assertEquals($scanId, session('last_scan_id'));
+    }
+
+    public function test_it_stores_last_scan_id_for_limit_exceeded_status(): void
+    {
+        // Set total_scans to exceed the limit
+        $this->qrCode->update(['total_scans' => 10]);
+
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+
+        $response = $this->postJson('/store', $scanData);
+
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'limit_exceeded']);
+        
+        // Verify session has last_scan_id even for limit_exceeded
+        $this->assertNotNull(session('last_scan_id'));
+        
+        $scanId = $response->json('scan_id');
+        $this->assertEquals($scanId, session('last_scan_id'));
+    }
+
+    public function test_it_uses_cached_data_when_accessing_same_qrcode_with_session(): void
+    {
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+
+        // First, make a scan to create session
+        $scanResponse = $this->postJson('/store', $scanData);
+        $scanId = $scanResponse->json('scan_id');
+
+        // Verify session was set
+        $this->assertEquals($scanId, session('last_scan_id'));
+
+        // Now access the scan page with the same QR code
+        $response = $this->get('/' . $this->qrCode->code);
+
+        $response->assertStatus(200);
+        $response->assertViewIs('index');
+        $response->assertViewHas('status', 'success');
+        $response->assertViewHas('scan_id', $scanId);
+        $response->assertViewHas('skipStoreLocation', true);
+        
+        // Verify the data is from the cached scan
+        $viewData = $response->viewData('data');
+        $this->assertEquals($this->product->name, $viewData['product_name']);
+        $this->assertEquals($this->qrCode->code, $viewData['qrcode']);
+    }
+
+    public function test_it_clears_session_when_accessing_different_qrcode(): void
+    {
+        // Create another QR code
+        $anotherQrCode = AuthenticityQRCode::create([
+            'code' => 'ANOTHER-QR-CODE-456',
+            'serial_number' => 'SN-654321',
+            'total_scans' => 0,
+            'product_id' => $this->product->id,
+            'created_by' => DB::table('admins')->first()->id,
+        ]);
+
+        // First scan to set session
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+        $this->postJson('/store', $scanData);
+        
+        // Verify session is set
+        $this->assertNotNull(session('last_scan_id'));
+
+        // Access different QR code
+        $response = $this->get('/' . $anotherQrCode->code);
+
+        $response->assertStatus(200);
+        $response->assertViewIs('index');
+        $response->assertViewMissing('status'); // Should not have cached data
+        $response->assertViewMissing('skipStoreLocation');
+        
+        // Session should be cleared
+        $this->assertNull(session('last_scan_id'));
+    }
+
+    public function test_it_clears_session_when_accessing_without_qrcode(): void
+    {
+        // First scan to set session
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+        $this->postJson('/store', $scanData);
+        
+        // Verify session is set
+        $this->assertNotNull(session('last_scan_id'));
+
+        // Access main page without QR code
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('main');
+        
+        // Session should be cleared
+        $this->assertNull(session('last_scan_id'));
+    }
+
+    public function test_it_does_not_use_cached_data_from_different_ip(): void
+    {
+        // Create scan from IP 192.168.1.1
+        $scanData = [
+            'qrcode' => $this->qrCode->code,
+            'scan_location' => 'Test Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+        
+        // Manually create a scan with different IP but set it in session
+        $scan = AuthenticityQRCodeScan::create([
+            'scan_id' => strtoupper(substr(bin2hex(random_bytes(8)), 0, 16)),
+            'qr_code' => $this->qrCode->code,
+            'ip_address' => '192.168.1.1', // Different IP
+            'scan_location' => 'Previous Location',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'scan_type' => 'success',
+            'authenticity_qr_code_id' => $this->qrCode->id,
+        ]);
+        
+        // Set the session to this scan_id
+        session(['last_scan_id' => $scan->scan_id]);
+
+        // Access from default IP (127.0.0.1)
+        $response = $this->get('/' . $this->qrCode->code);
+
+        $response->assertStatus(200);
+        $response->assertViewIs('index');
+        // Should not use cached data because IP is different
+        $response->assertViewMissing('status');
+        $response->assertViewMissing('skipStoreLocation');
     }
 }

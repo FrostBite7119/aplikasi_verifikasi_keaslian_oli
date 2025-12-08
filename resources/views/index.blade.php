@@ -97,13 +97,13 @@
                                         <p id="specification-box"></p>
                                         <div class="row">
                                             <div class="col-12">
-                                                <a class="btn btn-danger btn-block">Lapor</a>
+                                                <a class="btn btn-danger btn-block report-button">Lapor</a>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- /.card-body -->
                                 </div>
-                                <!-- /.card -->                                 
+                                <!-- /.card -->
                             </div>
                         </div>
                         <!-- /.card -->
@@ -132,7 +132,7 @@
                                 <!-- Report Button -->
                                 <div class="row">
                                     <div class="col-12">
-                                        <a class="btn btn-danger btn-block">Lapor</a>
+                                        <a class="btn btn-danger btn-block report-button">Lapor</a>
                                     </div>
                                 </div>
                             </div>
@@ -163,11 +163,10 @@
                                     Silahkan tanyakan kepada penjual atau melaporkan kepada kami untuk keterangan lebih lanjut.
                                 </p>
                             </div>
-                            
                             <!-- Report Button -->
                             <div class="row">
                                 <div class="col-12">
-                                    <a class="btn btn-danger btn-block">Lapor</a>
+                                    <a class="btn btn-danger btn-block report-button">Lapor</a>
                                 </div>
                             </div>
                         </div>
@@ -195,10 +194,55 @@
         <!-- Page specific script -->
         <script>
             $(function () {
+                function setDisplay(data)
+                {
+                    if(data.status === 'success'){
+                        $('#product-name').text(data.data.product_name);
+                        $('#total-scans').text(data.data.total_scans);
+                        $('#product-qrcode').text(data.data.qrcode);
+                        $('#product-serial-number').text(data.data.serial_number);
+                        $('#serial-number').text(data.data.serial_number);
+                        $('#scan-limit').text(data.data.scan_limit);
+                        $('#description-box').html(data.data.description);
+                        $('#specification-box').html(data.data.specification);
+                        // $('#product-image').attr('src', data.data.product_image);
+                        $('.report-button').attr('href', '/report/' + data.scan_id);
+
+                        // Show content
+                        $('#mainContent').show();
+                        $('notFoundContent').html('');
+                        $('#verification-content').show();
+                    }else if(data.status === 'limit_exceeded'){
+                        $('#limit-total-scans').text(data.data.scan_limit);
+                        $('#limit-scan-limit').text(data.data.scan_limit);
+                        $('.report-button').attr('href', '/report/' + data.scan_id);
+
+                        $('#mainContent').show();
+                        $('notFoundContent').html('');
+                        $('#limit-exceeded-content').show();
+                    }else if(data.status === 'ip_limit_exceeded'){
+                        $('body').html('');
+                        alert('Anda telah mencapai batas maksimum scan produk. Permintaan Anda tidak dapat diproses lebih lanjut.');
+                    }
+                    else if(data.status === 'not_found'){
+                        $('.report-button').attr('href', '/report/' + data.scan_id);
+                        $('#notFoundContent').show();
+                        $('#mainContent').html('');
+                    }
+                }
+
                 @if(isset($error))
                     alert('{{ $error }}');
                     $('body').html('');
                     return;
+                @elseif(isset($skipStoreLocation))
+                    let data = {
+                        status: "{{ $status }}",
+                        data : {!! json_encode($data) !!},
+                        scan_id: "{{ $scan_id }}",
+                    }
+
+                    setDisplay(data);
                 @else
                     // Check if geolocation is supported
                     if (!navigator.geolocation) {
@@ -237,36 +281,7 @@
                                                     _token: '{{ csrf_token() }}'
                                                 },
                                                 success: function(response) {
-                                                    if(response.status === 'success'){
-                                                        $('#product-name').text(response.data.product_name);
-                                                        $('#total-scans').text(response.data.total_scans);
-                                                        $('#product-qrcode').text(response.data.qrcode);
-                                                        $('#product-serial-number').text(response.data.serial_number);
-                                                        $('#serial-number').text(response.data.serial_number);
-                                                        $('#scan-limit').text(response.data.scan_limit);
-                                                        $('#description-box').html(response.data.description);
-                                                        $('#specification-box').html(response.data.specification);
-                                                        // $('#product-image').attr('src', response.data.product_image);
-
-                                                        // Show content
-                                                        $('#mainContent').show();
-                                                        $('notFoundContent').html('');
-                                                        $('#verification-content').show();
-                                                    }else if(response.status === 'limit_exceeded'){
-                                                        $('#limit-total-scans').text(response.data.scan_limit);
-                                                        $('#limit-scan-limit').text(response.data.scan_limit);
-
-                                                        $('#mainContent').show();
-                                                        $('notFoundContent').html('');
-                                                        $('#limit-exceeded-content').show();
-                                                    }else if(response.status === 'ip_limit_exceeded'){
-                                                        $('body').html('');
-                                                        alert('Anda telah mencapai batas maksimum scan produk. Permintaan Anda tidak dapat diproses lebih lanjut.');
-                                                    }
-                                                    else if(response.status === 'not_found'){
-                                                        $('#notFoundContent').show();
-                                                        $('#mainContent').html('');
-                                                    }
+                                                    setDisplay(response);
                                                 },
                                                 error: function(xhr, status, error) {
                                                     $('body').html('');
