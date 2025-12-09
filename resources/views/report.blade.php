@@ -17,7 +17,7 @@
         <link rel="stylesheet" href="/dist/css/adminlte.min.css">
     </head>
     <body class="hold-transition login-page">
-        <div id="report-form-container" class="login-box">
+        <div class="login-box">
             <!-- /.login-logo -->
             <div class="card">
                 <div class="card-body">
@@ -98,7 +98,7 @@
                         <div class="form-group">
                             <label for="product-image-input">Bukti Foto</label>
                             <div class="custom-file">
-                                <input id="product-image-input" type="file" class="custom-file-input @error('image') is-invalid @enderror" name="image" required>
+                                <input id="product-image-input" type="file" class="custom-file-input @error('image') is-invalid @enderror" name="image">
                                 <label class="custom-file-label" for="product-image-input">Pilih bukti foto...</label>
                                 @error('image')
                                 <div class="invalid-feedback">
@@ -150,11 +150,14 @@
         <script>
             $(function(){
                 $('#report-form').on('submit', function(e){
+                    @if(!$scan)
                     e.preventDefault();
 
-                    @if(!$scan)
-                    if (!navigator.geolocation) {
+                    disableButton(document.getElementById('submit-button'));
+
+                    if(!navigator.geolocation){
                         alert('Browser Anda tidak mendukung Geolocation. Tidak dapat melanjutkan proses.');
+                        enableButton(document.getElementById('submit-button'));
                         return;
                     }
 
@@ -162,6 +165,8 @@
                     google.maps.importLibrary("geocoding").then(() => {
                         requestLocation();
                     });
+
+                    const form = this;
 
                     // Function to request user location
                     function requestLocation() {
@@ -185,13 +190,16 @@
                                             $('#latitude-input').val(latitude);
                                             $('#longitude-input').val(longitude);
 
-                                            $('#report-form-container').show();
+                                            // Submit form after location data is populated
+                                            form.submit();
                                         } else {
                                             alert('Tidak dapat melanjutkan proses. Silakan coba lagi nanti.');
+                                            enableButton(document.getElementById('submit-button'));
                                             return;
                                         }
                                     } else {
                                         alert('Geocoder gagal karena: ' + status + '. Tidak dapat melanjutkan proses.');
+                                        enableButton(document.getElementById('submit-button'));
                                         return;
                                     }
                                 });
@@ -214,6 +222,7 @@
                                 }
                                 
                                 alert(errorMessage);
+                                enableButton(document.getElementById('submit-button'));
                                 return;
                             },
                             {
@@ -223,10 +232,9 @@
                             }
                         );
                     }
+                    @else
+                    disableButton(document.getElementById('submit-button'));                    
                     @endif
-                    
-                    disableButton(document.getElementById('submit-button'));
-                    this.submit();
                 });
             })
         </script>

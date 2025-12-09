@@ -27,7 +27,7 @@ class StoreReportRequest extends FormRequest
             'phone_number' => 'required|string|regex:/^08\d+$/|max:15',
             'reportReasons' => 'required|array|min:1',
             'reportReasons.*' => 'exists:report_reasons,id|distinct',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'image' => 'nullable|mimes:jpeg,png,jpg',
             'scan_id' => 'nullable|exists:authenticity_qr_code_scans,scan_id',
             'product_id' => 'nullable|exists:products,id',
@@ -39,7 +39,7 @@ class StoreReportRequest extends FormRequest
         ];
 
         // If scan_id is not provided, product_id and location fields are required
-        if (!$this->has('scan_id')) {
+        if ($this->input('scan_id') == null) {
             $rules['product_id'] = 'required|exists:products,id';
             $rules['address'] = 'required|string|max:255';
             $rules['city'] = 'required|string';
@@ -71,7 +71,6 @@ class StoreReportRequest extends FormRequest
             'reportReasons.required' => 'Setidaknya satu alasan laporan harus dipilih.',
             'reportReasons.*.exists' => 'Alasan laporan yang dipilih tidak valid.',
             'reportReasons.*.distinct' => 'Alasan laporan tidak boleh duplikat.',
-            'description.required' => 'Deskripsi wajib diisi.',
             'description.string' => 'Deskripsi harus berupa teks.',
             'image.mimes' => 'Gambar harus berformat jpeg, png, atau jpg.',
             'image.max' => 'Ukuran gambar maksimal adalah 2MB.',

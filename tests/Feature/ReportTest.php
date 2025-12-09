@@ -326,7 +326,7 @@ class ReportTest extends TestCase
     {
         $response = $this->post('/report/store', []);
 
-        $response->assertSessionHasErrors(['name', 'phone_number', 'reportReasons', 'description']);
+        $response->assertSessionHasErrors(['name', 'phone_number', 'reportReasons']);
     }
 
     public function test_it_validates_phone_number_format(): void
@@ -665,7 +665,35 @@ class ReportTest extends TestCase
 
         $response = $this->post('/report/store', $reportData);
 
-        $response->assertSessionHasErrors(['description']);
+        $response->assertRedirect('/');
+        $response->assertSessionHas('success');
+        
+        $report = Report::where('name', 'Test User')->first();
+        $this->assertEquals('', $report->description);
+    }
+
+    public function test_it_handles_null_description_field(): void
+    {
+        $reportData = [
+            'name' => 'Test User Null',
+            'phone_number' => '081234567890',
+            // description not provided
+            'reportReasons' => [$this->reportReason1->id],
+            'product_id' => $this->product->id,
+            'address' => 'Test',
+            'city' => 'Jakarta',
+            'province' => 'DKI Jakarta',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ];
+
+        $response = $this->post('/report/store', $reportData);
+
+        $response->assertRedirect('/');
+        $response->assertSessionHas('success');
+        
+        $report = Report::where('name', 'Test User Null')->first();
+        $this->assertEquals('', $report->description);
     }
 
     public function test_it_validates_name_max_length(): void

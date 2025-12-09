@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('report_id')->unique();
             $table->string('name');
             $table->string('phone_number');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->string('address');
             $table->string('city');
