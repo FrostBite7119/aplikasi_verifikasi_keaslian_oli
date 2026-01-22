@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AdminLTE 3 | Advanced form elements</title>
+    <title>Yimm Sparepart Genuine Check</title>
+    <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="/images/yimm-logo.png">
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Font Awesome -->
@@ -48,11 +50,11 @@
                             <div class="text-center">
                                 <!-- Logo Container -->
                                 <div class="logo-container">
-                                    <img src="" alt="Logo" class="logo">
+                                    <img src="/images/yimm-logo.png" alt="Logo Perusahaan" class="logo">
                                 </div>
                                 
                                 <!-- Company Name -->
-                                <h1 class="company-name">Company Name</h1>
+                                <h1 class="company-name">PT Daya Unggul Sentosa</h1>
                                 
                                 <!-- Subtitle -->
                                 <p class="subtitle">

@@ -69,7 +69,7 @@ class AuthenticityQRCodeScanController extends Controller
 
         return view('index', [
             'status' => $scan->scan_type,
-            'data' => $this->buildProductData($scan->authenticityQRCode, AuthenticityScanLimit::first()),
+            'data' => $scan->authenticityQRCode ? $this->buildProductData($scan->authenticityQRCode, AuthenticityScanLimit::first()) : null,
             'scan_id' => $scan->scan_id,
             'skipStoreLocation' => true,
         ]);
@@ -79,7 +79,6 @@ class AuthenticityQRCodeScanController extends Controller
     {
         $data = $request->validated();
 
-        // helper to create a scan and persist last scan id in session
         $saveScan = function (string $status, ?int $authId = null) use ($data) {
             $scan = $this->recordScan($data, $status, $authId);
             session()->put('last_scan_id', $scan->scan_id);
@@ -163,6 +162,7 @@ class AuthenticityQRCodeScanController extends Controller
     protected function buildProductData(AuthenticityQRCode $qrcode, AuthenticityScanLimit $scanLimit): array
     {
         return [
+            'product_id' => $qrcode->product->product_id,
             'product_name' => $qrcode->product->name,
             'total_scans' => $qrcode->total_scans,
             'scan_limit' => $scanLimit->max_scans,

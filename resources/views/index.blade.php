@@ -3,7 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>AdminLTE 3 | Advanced form elements</title>
+        <title>Yimm Sparepart Genuine Check</title>
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="/images/yimm-logo.png">
         <!-- Google Font: Source Sans Pro -->
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
         <!-- Font Awesome -->
@@ -47,7 +49,7 @@
                                     <div class="card-body">
                                         <!-- Product Image Section -->
                                         <div class="text-center">
-                                            <img id="product-image" src="https://www.ahm.to/assets/image/MPX1.jpg" alt="MPX1 0.8L" style="width: 100%; height: auto;">                                                    
+                                            <img id="product-image" src="" alt="" style="width: 100%; height: auto;">
                                         </div>
                                         <h4 class="mt-3 mb-0"><b id="product-name"></b></h4>
                                         <!-- /.Product Image Section -->
@@ -197,6 +199,8 @@
                 function setDisplay(data)
                 {
                     if(data.status === 'success'){
+                        $('#product-image').attr('src', "http://192.168.1.75:8000/products/image/" + data.data.product_id); //"https://admin.appsjoker.com/products/image/" + data.data.product_id
+                        $('#product-image').attr('alt', data.data.product_name);
                         $('#product-name').text(data.data.product_name);
                         $('#total-scans').text(data.data.total_scans);
                         $('#product-qrcode').text(data.data.qrcode);
@@ -205,7 +209,6 @@
                         $('#scan-limit').text(data.data.scan_limit);
                         $('#description-box').html(data.data.description);
                         $('#specification-box').html(data.data.specification);
-                        // $('#product-image').attr('src', data.data.product_image);
                         $('.report-button').attr('href', '/report/' + data.scan_id);
 
                         // Show content
