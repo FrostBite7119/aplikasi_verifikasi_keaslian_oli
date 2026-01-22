@@ -225,7 +225,7 @@
                         $('#limit-exceeded-content').show();
                     }else if(data.status === 'ip_limit_exceeded'){
                         $('body').html('');
-                        alert('Anda telah mencapai batas maksimum scan produk. Permintaan Anda tidak dapat diproses lebih lanjut.');
+                        alert('Anda telah mencapai batas maksimum untuk botol ini. Permintaan Anda tidak dapat diproses lebih lanjut.');
                     }
                     else if(data.status === 'not_found'){
                         $('.report-button').attr('href', '/report/' + data.scan_id);
