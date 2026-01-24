@@ -120,7 +120,7 @@ class AuthenticityQRCodeScanTest extends TestCase
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
             'qr_code' => $this->qrCode->code,
             'scan_location' => 'Test Location',
-            'scan_type' => 'success',
+            'scan_result' => 'success',
             'authenticity_qr_code_id' => $this->qrCode->id,
         ]);
 
@@ -156,7 +156,7 @@ class AuthenticityQRCodeScanTest extends TestCase
         // Verify scan was recorded with not_found type
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
             'qr_code' => 'INVALID-QR-CODE',
-            'scan_type' => 'not_found',
+            'scan_result' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
 
@@ -194,13 +194,13 @@ class AuthenticityQRCodeScanTest extends TestCase
         // Verify scan was recorded with limit_exceeded type
         $this->assertDatabaseHas('authenticity_qr_code_scans', [
             'qr_code' => $this->qrCode->code,
-            'scan_type' => 'limit_exceeded',
+            'scan_result' => 'limit_exceeded',
             'authenticity_qr_code_id' => $this->qrCode->id,
         ]);
 
         // Verify scan_id was generated
         $scan = AuthenticityQRCodeScan::where('qr_code', $this->qrCode->code)
-            ->where('scan_type', 'limit_exceeded')
+            ->where('scan_result', 'limit_exceeded')
             ->first();
         $this->assertNotNull($scan->scan_id);
         $this->assertEquals(16, strlen($scan->scan_id));
@@ -231,7 +231,7 @@ class AuthenticityQRCodeScanTest extends TestCase
                 'province' => 'DKI Jakarta',
                 'latitude' => -6.2088,
                 'longitude' => 106.8456,
-                'scan_type' => 'success',
+                'scan_result' => 'success',
                 'authenticity_qr_code_id' => $this->qrCode->id,
             ]);
         }
@@ -257,7 +257,7 @@ class AuthenticityQRCodeScanTest extends TestCase
                 'province' => 'DKI Jakarta',
                 'latitude' => -6.2088,
                 'longitude' => 106.8456,
-                'scan_type' => 'success',
+                'scan_result' => 'success',
                 'authenticity_qr_code_id' => $this->qrCode->id,
             ]);
         }
@@ -579,7 +579,7 @@ class AuthenticityQRCodeScanTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'success',
+            'scan_result' => 'success',
             'authenticity_qr_code_id' => $this->qrCode->id,
         ]);
         

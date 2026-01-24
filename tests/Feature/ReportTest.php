@@ -95,7 +95,7 @@ class ReportTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'success',
+            'scan_result' => 'success',
             'authenticity_qr_code_id' => $qrCode->id,
         ]);
 
@@ -109,7 +109,7 @@ class ReportTest extends TestCase
         $response->assertViewHas('needProductColumn', false);
     }
 
-    public function test_it_shows_product_column_for_not_found_scan_type(): void
+    public function test_it_shows_product_column_for_not_found_scan_result(): void
     {
         // Create scan with not_found type
         $scan = AuthenticityQRCodeScan::create([
@@ -121,7 +121,7 @@ class ReportTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'not_found',
+            'scan_result' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
 
@@ -151,7 +151,7 @@ class ReportTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'not_found',
+            'scan_result' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
 
@@ -229,7 +229,7 @@ class ReportTest extends TestCase
             'province' => 'Jawa Barat',
             'latitude' => -6.9175,
             'longitude' => 107.6191,
-            'scan_type' => 'success',
+            'scan_result' => 'success',
             'authenticity_qr_code_id' => $qrCode->id,
         ]);
 
@@ -256,7 +256,7 @@ class ReportTest extends TestCase
         ]);
     }
 
-    public function test_it_successfully_creates_report_with_not_found_scan_type(): void
+    public function test_it_successfully_creates_report_with_not_found_scan_result(): void
     {
         // Create scan with not_found type
         $scan = AuthenticityQRCodeScan::create([
@@ -268,7 +268,7 @@ class ReportTest extends TestCase
             'province' => 'Jawa Timur',
             'latitude' => -7.2575,
             'longitude' => 112.7521,
-            'scan_type' => 'not_found',
+            'scan_result' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
 
@@ -440,7 +440,7 @@ class ReportTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'not_found',
+            'scan_result' => 'not_found',
             'authenticity_qr_code_id' => null,
         ]);
 
@@ -466,7 +466,7 @@ class ReportTest extends TestCase
             'description' => 'Second report',
             'reportReasons' => [$this->reportReason1->id],
             'scan_id' => $scan->scan_id,
-            'product_id' => $this->product->id, // Required for not_found scan_type
+            'product_id' => $this->product->id, // Required for not_found scan_result
         ];
 
         $response = $this->post('/report/store', $reportData);
@@ -803,7 +803,7 @@ class ReportTest extends TestCase
         }
     }
 
-    public function test_it_handles_different_scan_types(): void
+    public function test_it_handles_different_scan_results(): void
     {
         $scanTypes = ['success', 'limit_exceeded', 'not_found'];
 
@@ -829,7 +829,7 @@ class ReportTest extends TestCase
                 'province' => 'DKI Jakarta',
                 'latitude' => -6.2088,
                 'longitude' => 106.8456,
-                'scan_type' => $scanType,
+                'scan_result' => $scanType,
                 'authenticity_qr_code_id' => $qrCode?->id,
             ]);
 
@@ -1152,7 +1152,7 @@ class ReportTest extends TestCase
             'province' => 'DKI Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
-            'scan_type' => 'success',
+            'scan_result' => 'success',
             'authenticity_qr_code_id' => $qrCode->id,
         ]);
 

@@ -69,7 +69,7 @@ class AuthenticityQRCodeScanController extends Controller
         $scan = AuthenticityQRCodeScan::where('scan_id', session()->get('last_scan_id'))->first();
 
         return view('index', [
-            'status' => $scan->scan_type,
+            'status' => $scan->scan_result,
             'data' => $scan->authenticityQRCode ? $this->buildProductData($scan->authenticityQRCode, AuthenticityScanLimit::first()) : null,
             'scan_id' => $scan->scan_id,
             'skipStoreLocation' => true,
@@ -153,7 +153,7 @@ class AuthenticityQRCodeScanController extends Controller
             'province' => $validatedData['province'],
             'latitude' => $validatedData['latitude'],
             'longitude' => $validatedData['longitude'],
-            'scan_type' => $scanType,
+            'scan_result' => $scanType,
             'authenticity_qr_code_id' => $authenticityQrCodeId,
         ]);
 

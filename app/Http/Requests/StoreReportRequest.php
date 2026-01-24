@@ -47,9 +47,9 @@ class StoreReportRequest extends FormRequest
             $rules['latitude'] = 'required|numeric';
             $rules['longitude'] = 'required|numeric';
         } else {
-            // If scan_id is provided, check if scan_type is 'not_found'
+            // If scan_id is provided, check if scan_result is 'not_found'
             $scan = AuthenticityQRCodeScan::where('scan_id', $this->input('scan_id'))->first();
-            if ($scan && $scan->scan_type === 'not_found') {
+            if ($scan && $scan->scan_result === 'not_found') {
                 $rules['product_id'] = 'required|exists:products,id';
             }
         }

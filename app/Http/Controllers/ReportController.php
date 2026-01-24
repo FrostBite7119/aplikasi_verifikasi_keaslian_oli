@@ -31,7 +31,7 @@ class ReportController extends Controller
                 return redirect('/')->with('error', 'Laporan untuk scan ID ini sudah ada.');
             }
 
-            $needProductColumn = $authenticityQRCodeScan->scan_type === 'not_found';
+            $needProductColumn = $authenticityQRCodeScan->scan_result === 'not_found';
         }
 
         return view('report', [
@@ -76,7 +76,7 @@ class ReportController extends Controller
                 $province = $authenticityQRCodeScan->province;
                 $latitude = $authenticityQRCodeScan->latitude;
                 $longitude = $authenticityQRCodeScan->longitude;
-                $productId = $authenticityQRCodeScan->scan_type == 'not_found' 
+                $productId = $authenticityQRCodeScan->scan_result == 'not_found' 
                     ? ($validatedData['product_id'])
                     : $authenticityQRCodeScan->authenticityQRCode->product_id;
             } else {

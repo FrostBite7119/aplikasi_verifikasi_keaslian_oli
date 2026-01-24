@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('province');
             $table->string('latitude');
             $table->string('longitude');
-            $table->enum('scan_type', ['success', 'limit_exceeded', 'not_found'])->default('success');
+            $table->enum('scan_result', ['success', 'limit_exceeded', 'not_found'])->default('success');
             $table->foreignId('authenticity_qr_code_id')->nullable()->constrained(table: 'authenticity_qr_codes', indexName: 'authenticity_qr_code_scans_authenticity_qr_code_id');
             $table->timestamps();
         });

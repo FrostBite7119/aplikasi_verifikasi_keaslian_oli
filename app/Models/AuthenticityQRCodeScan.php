@@ -20,7 +20,7 @@ class AuthenticityQRCodeScan extends Model
         'province',
         'latitude',
         'longitude',
-        'scan_type',
+        'scan_result',
         'authenticity_qr_code_id',
     ];
 
