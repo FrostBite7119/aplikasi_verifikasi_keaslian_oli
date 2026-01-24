@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'gcs'),
 
     /*
     |--------------------------------------------------------------------------
@@ -29,6 +29,16 @@ return [
     */
 
     'disks' => [
+        'gcs' => [
+            'driver' => 'gcs',
+            'project_id' => 'yimm-reward',
+            'key_file_path' => storage_path('app/google-cloud/yimm-reward-5a3c186b413b.json'),
+            'bucket' => 'yimm-reward',
+            'path_prefix' => null,
+            'storage_api_uri' => null,
+            'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class,
+            'throw' => true,
+        ],
 
         'local' => [
             'driver' => 'local',

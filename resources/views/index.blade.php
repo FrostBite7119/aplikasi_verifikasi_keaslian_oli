@@ -199,7 +199,7 @@
                 function setDisplay(data)
                 {
                     if(data.status === 'success'){
-                        $('#product-image').attr('src', "http://192.168.1.75:8000/products/image/" + data.data.product_id); //"https://admin.appsjoker.com/products/image/" + data.data.product_id
+                        $('#product-image').attr('src', data.data.product_image);
                         $('#product-image').attr('alt', data.data.product_name);
                         $('#product-name').text(data.data.product_name);
                         $('#total-scans').text(data.data.total_scans);

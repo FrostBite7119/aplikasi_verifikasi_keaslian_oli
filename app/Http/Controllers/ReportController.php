@@ -114,19 +114,12 @@ class ReportController extends Controller
             DB::rollBack();
             
             // Delete uploaded image if exists
-            if ($imagePath && Storage::disk('local')->exists($imagePath)) {
-                Storage::disk('local')->delete($imagePath);
+            if ($imagePath && Storage::exists($imagePath)) {
+                Storage::delete($imagePath);
             }
             
             return redirect()->back()
             ->withErrors(['error' => 'Terjadi kesalahan. Silakan coba lagi.' . $e->getMessage()]);
         }
-    }
-
-    public function getReportImage(Report $report)
-    {
-        $response = Storage::response("report_images/{$report->image}");
-
-        return $response;
     }
 }

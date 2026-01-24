@@ -7,6 +7,7 @@ use App\Models\AuthenticityQRCode;
 use App\Models\AuthenticityQRCodeScan;
 use App\Models\AuthenticityScanLimit;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AuthenticityQRCodeScanController extends Controller
@@ -170,7 +171,7 @@ class AuthenticityQRCodeScanController extends Controller
             'serial_number' => $qrcode->serial_number,
             'description' => $qrcode->product->description,
             'specification' => $qrcode->product->specification,
-            'product_image' => url("products/image/{$qrcode->product->product_id}"),
+            'product_image' => Storage::temporaryUrl("product_images/{$qrcode->product->image}", now()->addMinutes(30)),
         ];
     }
 
