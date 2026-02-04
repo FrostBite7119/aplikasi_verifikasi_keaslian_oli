@@ -54,12 +54,26 @@
                                 </div>
                                 
                                 <!-- Company Name -->
-                                <h1 class="company-name">PT Daya Unggul Sentosa</h1>
+                                <h1 class="company-name">PT Daya Unggul Sejahtera</h1>
                                 
                                 <!-- Subtitle -->
                                 <p class="subtitle">
                                     Silahkan lakukan pemindaian kode QR untuk memverifikasi keaslian produk Anda.
                                 </p>
+
+                                <div class="mt-4">
+                                    <p class="subtitle" style="font-size: 14px; margin-bottom: 15px;">Atau masukkan kode secara manual</p>
+                                    <form id="manualScanForm">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control form-control-lg" id="userInput" placeholder="Masukkan Kode" required style="text-transform: uppercase;">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-danger" type="submit">
+                                                    <i class="fas fa-search"></i> Cek
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -80,6 +94,17 @@
     <script src="/dist/js/adminlte.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#manualScanForm').on('submit', function(e) {
+                e.preventDefault();
+                var code = $('#userInput').val().trim().toUpperCase();
+                if (code) {
+                    window.location.href = '/' + encodeURIComponent(code);
+                }
+            });
+        });
+    </script>
     @if(session('success'))
     <script>
         $(function(){

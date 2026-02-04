@@ -32,7 +32,7 @@
                         </ul>
                     </div>
                     @endif
-                    <form id="report-form" action="/report/store" method="post" enctype="multipart/form-data">
+                    <form id="report-form" action="/report/store" method="post" onsubmit="" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="scan_id" value="{{ $scan ? $scan->scan_id : '' }}">
                         @if(!$scan)
@@ -43,7 +43,7 @@
                         <input type="hidden" id="longitude-input" name="longitude">
                         @endif
                         <div class="form-group">
-                            <label for="name-input">Nama</label>
+                            <label for="name-input">Nama <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name-input" name="name" value="{{ old('name') }}" placeholder="Masukan nama" required>
                             @error('name')
                             <div class="invalid-feedback">
@@ -52,7 +52,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="phone-number-input">Nomor Telepon</label>
+                            <label for="phone-number-input">Nomor Telepon <span class="text-danger">*</span></label>
                             <input type="tel" class="form-control @error('phone_number') is-invalid @enderror" id="phone-number-input" name="phone_number" value="{{ old('phone_number') }}" placeholder="Masukkan nomor telepon" required>
                             @error('phone_number')
                             <div class="invalid-feedback">
@@ -62,7 +62,7 @@
                         </div>
                         @if($needProductColumn)
                         <div class="form-group">
-                            <label>Produk</label>
+                            <label>Produk <span class="text-danger">*</span></label>
                             <select class="select2 @error('product_id') is-invalid @enderror" data-placeholder="Pilih produk" name="product_id" style="width: 100%;" required>
                                 <option value=""></option>
                                 @foreach($products as $product)
@@ -77,7 +77,7 @@
                         </div>
                         @endif
                         <div class="form-group">
-                            <label>Alasan Lapor</label>
+                            <label>Alasan Lapor <span class="text-danger">*</span></label>
                             <select class="select2" multiple="multiple" data-placeholder="Alasan melapor" style="width: 100%;" name="reportReasons[]" required>
                                 <option value=""></option>
                                 @foreach($reportReasons as $reason)
@@ -107,8 +107,9 @@
                                 @enderror
                             </div>
                         </div>
+                        <small class="form-text text-danger mb-2 mt-2">* Wajib diisi</small>
                         <div class="text-center mb-3">
-                            <button id="submit-button" type="submit" class="btn btn-block btn-danger">Lapor</button>
+                            <button id="submit-button" type="submit" class="btn btn-block btn-danger" onclick="return confirm('Apakah Anda yakin?')">Lapor</button>
                         </div>
                     </form>
                 </div>
