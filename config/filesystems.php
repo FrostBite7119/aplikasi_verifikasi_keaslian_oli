@@ -31,9 +31,9 @@ return [
     'disks' => [
         'gcs' => [
             'driver' => 'gcs',
-            'project_id' => 'yimm-reward',
-            'key_file_path' => storage_path('app/google-cloud/yimm-reward-5a3c186b413b.json'),
-            'bucket' => 'yimm-reward',
+            'project_id' => env('GOOGLE_CLOUD_PROJECT_ID', 'mitra-yimm-489807'),
+            'key_file_path' => env('GOOGLE_CLOUD_KEY_FILE', null),
+            'bucket' => env('GOOGLE_CLOUD_BUCKET', 'mitra_yimm_bucket'),
             'path_prefix' => null,
             'storage_api_uri' => null,
             'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class,
