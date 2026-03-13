@@ -27,29 +27,40 @@ class AuthenticityQRCodeScanController extends Controller
 
     /**
      * Resolve the real client IP address.
-     * On Cloud Run/Firebase, the real IP is in X-Forwarded-For header.
-     * With trusted proxies configured, request()->ip() handles this,
-     * but we add an explicit fallback for safety.
+     * On Cloud Run/Firebase, prefer the first client IP from the
+     * trusted X-Forwarded-For chain, then fall back to Laravel.
      */
     protected function resolveClientIp(): string
     {
-        $ip = request()->ip();
+        $forwarded = request()->header('X-Forwarded-For');
 
-        // Fallback: if ip() returns a private/reserved IP, try X-Forwarded-For directly
-        if ($ip && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            $forwarded = request()->header('X-Forwarded-For');
-            if ($forwarded) {
-                // X-Forwarded-For can contain multiple IPs: client, proxy1, proxy2
-                // The first one is the original client IP
-                $ips = array_map('trim', explode(',', $forwarded));
-                $clientIp = filter_var($ips[0], FILTER_VALIDATE_IP);
-                if ($clientIp !== false) {
-                    return $clientIp;
+        if ($forwarded) {
+            $forwardedIps = array_map('trim', explode(',', $forwarded));
+
+            foreach ($forwardedIps as $forwardedIp) {
+                $publicIp = filter_var(
+                    $forwardedIp,
+                    FILTER_VALIDATE_IP,
+                    FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                );
+
+                if ($publicIp !== false) {
+                    return $publicIp;
+                }
+            }
+
+            foreach ($forwardedIps as $forwardedIp) {
+                $validatedForwardedIp = filter_var($forwardedIp, FILTER_VALIDATE_IP);
+                if ($validatedForwardedIp !== false) {
+                    return $validatedForwardedIp;
                 }
             }
         }
 
-        return $ip ?? '0.0.0.0';
+        $ip = request()->ip();
+        $validatedIp = $ip ? filter_var(trim($ip), FILTER_VALIDATE_IP) : false;
+
+        return $validatedIp !== false ? $validatedIp : '0.0.0.0';
     }
 
     public function scan(?string $qrcode = null): View
