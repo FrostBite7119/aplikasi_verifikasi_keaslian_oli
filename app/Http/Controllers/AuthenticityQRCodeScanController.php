@@ -22,7 +22,34 @@ class AuthenticityQRCodeScanController extends Controller
 
     public function __construct()
     {
-        $this->userIP = request()->ip();
+        $this->userIP = $this->resolveClientIp();
+    }
+
+    /**
+     * Resolve the real client IP address.
+     * On Cloud Run/Firebase, the real IP is in X-Forwarded-For header.
+     * With trusted proxies configured, request()->ip() handles this,
+     * but we add an explicit fallback for safety.
+     */
+    protected function resolveClientIp(): string
+    {
+        $ip = request()->ip();
+
+        // Fallback: if ip() returns a private/reserved IP, try X-Forwarded-For directly
+        if ($ip && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            $forwarded = request()->header('X-Forwarded-For');
+            if ($forwarded) {
+                // X-Forwarded-For can contain multiple IPs: client, proxy1, proxy2
+                // The first one is the original client IP
+                $ips = array_map('trim', explode(',', $forwarded));
+                $clientIp = filter_var($ips[0], FILTER_VALIDATE_IP);
+                if ($clientIp !== false) {
+                    return $clientIp;
+                }
+            }
+        }
+
+        return $ip ?? '0.0.0.0';
     }
 
     public function scan(?string $qrcode = null): View
